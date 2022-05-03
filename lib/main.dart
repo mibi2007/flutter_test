@@ -87,11 +87,18 @@ Future<void> testIt() async {
 }
 
 class PersonsProvider with ChangeNotifier {
-  Iterable<Person> persons;
-  PersonsProvider({this.persons = const Iterable<Person>.empty()});
+  List<Iterable<Person>> persons;
+  PersonsProvider({this.persons = const []});
 
-  void updateValue() {
-    testIt();
+  Future<void> updateValue() async {
+    final result = await GetApiEndPoints().get(url).then(
+          (endPoints) => Future.wait(
+            endPoints.map((endPoint) => GetPeople().getPeople(endPoint)),
+          ),
+        );
+    persons = result;
+    persons.log();
+    notifyListeners();
   }
 }
 
@@ -114,7 +121,7 @@ class MyHomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text('Person List'),
-            ...context.watch<PersonsProvider>().persons.map((person) => Text(person.name)),
+            ...context.watch<PersonsProvider>().persons.expand((element) => element.map((e) => Text(e.name))).toList(),
           ],
         ),
       ),
