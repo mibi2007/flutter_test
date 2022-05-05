@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as devtools show log;
 
@@ -59,6 +60,9 @@ extension EmptyOnError<T> on Future<List<Iterable<T>>> {
 extension EmptyOnError2<T> on Future<Iterable<T>> {
   Future<Iterable<T>> emptyOnError() => catchError((_, __) => Iterable<T>.empty());
 }
+// extension EmptyOnError3<T> on Stream<Iterable<T>> {
+//   Stream<Iterable<T>> emptyOnError() => catch((_, __) => Iterable<T>.empty());
+// }
 
 const url = 'http://127.0.0.1:5500/api/apis.json';
 
@@ -77,27 +81,30 @@ class GetPeople with ListOfThingAPI<Map<String, dynamic>> {
       get(url).then((jsons) => jsons.map((json) => Person.fromJson(json)));
 }
 
-Future<void> testIt() async {
-  final result = await GetApiEndPoints().get(url).then(
-        (endPoints) => Future.wait(
-          endPoints.map((endPoint) => GetPeople().getPeople(endPoint)),
-        ),
-      );
-  print(result);
+void testIt() async {
+  await for (final people in Stream.periodic(const Duration(seconds: 3)).asyncExpand((event) => GetApiEndPoints()
+      .get(url)
+      .then((endPoins) => Future.wait(endPoins.map((endPoint) => GetPeople().getPeople(endPoint))))
+      .asStream())) {
+    people.log();
+  }
 }
 
 class PersonsProvider with ChangeNotifier {
   List<Iterable<Person>> persons;
   PersonsProvider({this.persons = const []});
-
-  Future<void> updateValue() async {
-    persons = await GetApiEndPoints().get(url).then(
-          (endPoints) => Future.wait(
-            endPoints.map((endPoint) => GetPeople().getPeople(endPoint)),
-          ),
-        );
-    persons.log();
-    notifyListeners();
+  StreamSubscription? _stream;
+  void updateValue() async {
+    if (_stream != null) _stream!.cancel();
+    _stream = Stream.periodic(const Duration(seconds: 3))
+        .asyncExpand((event) => GetApiEndPoints()
+            .get(url)
+            .then((endPoins) => Future.wait(endPoins.map((endPoint) => GetPeople().getPeople(endPoint))))
+            .asStream())
+        .listen((result) {
+      persons = result;
+      notifyListeners();
+    });
   }
 }
 
