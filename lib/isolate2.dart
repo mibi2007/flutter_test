@@ -90,7 +90,7 @@ void getPersonsIsolate(Request request) async {
   //     .then((json) => json.map((person) => Person.fromJson(person)).toList());
   // print(persons);
   // request.sendPort.send(persons);
-  await for (final persons in Stream.periodic(
+  await for (final _ in Stream.periodic(
     const Duration(seconds: 1),
     (_) => HttpClient() //
         .getUrl(request.uri)

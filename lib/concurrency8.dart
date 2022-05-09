@@ -38,7 +38,6 @@ extension Logger on Object {
   void log() => devtools.log(toString());
 }
 
-@immutable
 class Person {
   final String name;
   final int age;

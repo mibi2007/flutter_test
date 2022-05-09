@@ -38,7 +38,7 @@ class ShoppingPage extends StatelessWidget {
     final existItem = Item(id: data[1].id, name: data[1].name, price: data[1].price);
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => CartCubit()),
+        BlocProvider(create: (context) => CartCubit()..addItem(existItem)),
         BlocProvider(create: (context) => CounterCubit()),
       ],
       child: Scaffold(
