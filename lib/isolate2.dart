@@ -99,8 +99,9 @@ void getPersonsIsolate(Request request) async {
         .then((body) => json.decode(body) as List<dynamic>)
         .then((json) => json.map((person) => Person.fromJson(person)))
         .then((persons) => request.sendPort.send(persons)),
-  ).take(3)) {}
-  Isolate.exit(request.sendPort);
+  ).take(3)) {
+    Isolate.exit(request.sendPort);
+  }
 }
 
 // Stream<Widget> getPersonsWidgets () async {
