@@ -1,6 +1,5 @@
 import 'dart:developer' as devtools show log;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,11 +16,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ItemCart(1, id: '1', name: 'name', price: 1).hashCode.log();
-    (ItemCart(1, id: '1', name: 'name', price: 1).hashCode == ItemCart(1, id: '1', name: 'name', price: 1).hashCode)
-        .log();
-    mapEquals({'items': ItemCart(1, id: '1', name: 'name', price: 1)},
-        {'items': ItemCart(1, id: '1', name: 'name', price: 1)}).log();
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Welcome to Flutter',
@@ -39,7 +33,7 @@ class ShoppingPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => CartCubit()..addItem(existItem)),
-        BlocProvider(create: (context) => CounterCubit()),
+        BlocProvider(create: (context) => CounterCubit()..increment()),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -66,9 +60,9 @@ class ShoppingList extends StatelessWidget {
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, state) => Column(
         children: [
-          Text(context.watch<CartCubit>().itemCount().toString()),
-          Text(context.watch<CartCubit>().totalPrice().toString()),
-          BlocBuilder<CounterCubit, int>(builder: (context, count) => Text(count.toString())),
+          Text('CounterCubit: ${state.itemCount().toString()}'),
+          Text('CounterCubit: ${state.totalPrice().toString()}'),
+          BlocBuilder<CounterCubit, int>(builder: (context, count) => Text('CounterCubit: ${count.toString()}')),
           Expanded(
             child: ListView.builder(
               itemBuilder: (context, index) {
@@ -126,32 +120,38 @@ class ShoppingCart extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   const Positioned(left: 0, top: 0, child: Icon(Icons.shopping_cart)),
-                  Positioned(
-                    top: -3,
-                    left: 10,
-                    child: CustomPaint(
-                      size: const Size(20, 15),
-                      painter: OvalPainter(),
+                  if (state.itemCount() > 0)
+                    Positioned(
+                      top: -3,
+                      left: 10,
+                      child: CustomPaint(
+                        size: const Size(20, 15),
+                        painter: OvalPainter(),
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    left: 14,
-                    top: -1,
-                    child: Text(
-                      context.read<CartCubit>().itemCount().toString(),
-                      style: const TextStyle(fontSize: 10),
+                  if (state.itemCount() > 0)
+                    Positioned(
+                      left: 8,
+                      top: -1,
+                      width: 25,
+                      child: Center(
+                        child: Text(
+                          state.itemCount().toString(),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
-            Text(context.read<CartCubit>().totalPrice().toString()),
-            if (context.read<CartCubit>().itemCount() > 0)
+            Text(state.totalPrice().toString()),
+            if (state.itemCount() > 0)
               IconButton(
                 onPressed: () {
                   context.read<CartCubit>().empty();
+                  context.read<CounterCubit>().reset();
                 },
-                icon: const Icon(Icons.remove),
+                icon: const Icon(Icons.clear),
               ),
           ],
         );
@@ -208,16 +208,9 @@ class CartCubit extends Cubit<CartState> {
   }
 
   void empty() {
-    state.items.clear();
-    emit(state);
-  }
-
-  int itemCount() {
-    return state.items.values.fold(0, (sum, item) => sum + item.quantity);
-  }
-
-  int totalPrice() {
-    return state.items.values.fold(0, (sum, item) => sum + item.price * item.quantity);
+    CartState newState = CartState.clone(state);
+    newState.items.clear();
+    emit(newState);
   }
 }
 
@@ -226,19 +219,12 @@ class CounterCubit extends Cubit<int> {
 
   void increment() => emit(state + 1);
   void decrement() => emit(state - 1);
+  void reset() => emit(0);
 }
 
 @immutable
 class CartState {
   final Map<String, ItemCart> items = {};
-
-  int itemCount() {
-    return items.values.fold(0, (sum, item) => sum + item.quantity);
-  }
-
-  int totalPrice() {
-    return items.values.fold(0, (sum, item) => sum + item.price * item.quantity);
-  }
 
   static CartState clone(CartState state) {
     final newState = CartState();
@@ -247,6 +233,14 @@ class CartState {
       return MapEntry(key, value);
     });
     return newState;
+  }
+
+  int itemCount() {
+    return items.values.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  int totalPrice() {
+    return items.values.fold(0, (sum, item) => sum + item.price * item.quantity);
   }
 }
 

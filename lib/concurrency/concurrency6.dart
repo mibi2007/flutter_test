@@ -83,7 +83,7 @@ Future<void> testIt() async {
           endPoints.map((endPoint) => GetPeople().getPeople(endPoint)),
         ),
       );
-  print(result);
+  result.log();
 }
 
 class PersonsProvider with ChangeNotifier {

@@ -29,7 +29,7 @@ int count = 0;
 int localMarketCount = 0;
 int shoppingCenterCount = 0;
 void testApp() async {
-  await for (final value in Stream.periodic(
+  await for (final _ in Stream.periodic(
     const Duration(milliseconds: 1000),
     (i) => test2(),
   ).take(10)) {}

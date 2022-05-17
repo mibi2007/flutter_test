@@ -2,10 +2,10 @@ void main(List<String> args) async {
   final myCard = CreditCard();
   final paymentSystem = PaymentSystem();
 
-  final result = bookRooms(myCard, 3);
-  paymentSystem.charge(myCard, result.second.amount);
-  print(result.first);
-  print(result.second.amount);
+  final rooms = bookRooms(myCard, 3);
+  paymentSystem.charge(rooms.second.cc, rooms.second.amount);
+  print('${rooms.first.join(' ')} booked');
+  print(rooms.second.amount);
 }
 
 typedef BookRoomFunction = Future<Room> Function(CreditCard);
